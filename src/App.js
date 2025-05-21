@@ -1,5 +1,8 @@
 import * as THREE from "three";
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { CSS2DRenderer, CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+import LabelPlanet from "./Services/LabelPlanet";
 import * as dat from "dat.gui";
 import CreatePlanet from "./Services/CreatePlanet";
 import ModalWindow from "./Services/ModalWindow"
@@ -16,7 +19,7 @@ import uranusTexture from "./Images/uranus.jpg";
 import uranusRingTexture from "./Images/uranus ring.png";
 import neptuneTexture from "./Images/neptune.jpg";
 import plutoTexture from "./Images/pluto.jpg";
-import { PI } from "three/tsl";
+
 const renderer = new THREE.WebGLRenderer();
 renderer.shadowMap.enabled = true;
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -61,6 +64,7 @@ const options = {
   Rotation: true,
   Revolution: true,
   Orbits: false,
+  Labels: false,
   Speed: 1,
   MotionSpeed: 10,
   View: "Front View",
@@ -128,6 +132,16 @@ gui.add(options, "Orbits").onChange((e) => {
     for (let it of orbits) scene.remove(it);
   }
 });
+gui.add(options,"Labels").onChange((e)=>{
+  if(e===true)
+  {
+    for(let {LabelObject,planet} of labelRenderers) planet.add(LabelObject);
+  }
+  else
+  {
+    for(let {LabelObject,planet} of labelRenderers) planet.remove(LabelObject);
+  }
+})
 gui.add(options, "Speed", 0, 10);
 gui.add(options, "MotionSpeed", 0, 100);
 gui.add(options, "View", views).onChange((e) => {
@@ -161,60 +175,82 @@ const ambientLight = new THREE.AmbientLight(0xffffff);
 
 const textureLoader = new THREE.TextureLoader();
 
+
+let labelRenderers=[];
 const sunGeo = new THREE.SphereGeometry(16, 30, 30);
 const sunMat = new THREE.MeshBasicMaterial({
   map: textureLoader.load(sunTexture),
 });
 const sun = new THREE.Mesh(sunGeo, sunMat);
 scene.add(sun);
+labelRenderers.push({...LabelPlanet("Sun",0),planet:sun})
 
 const { planet: mercury, planetparent: mercuryparent } = CreatePlanet(
   3.2,
   mercuryTexture,
   28
 );
+labelRenderers.push({...LabelPlanet("Mercury"),planet:mercury});
+
 const { planet: venus, planetparent: venusparent } = CreatePlanet(
   5.8,
   venusTexture,
   44
 );
+labelRenderers.push({...LabelPlanet("Venus"),planet:venus});
+
 const { planet: earth, planetparent: earthparent } = CreatePlanet(
   6,
   earthTexture,
   62
 );
+labelRenderers.push({...LabelPlanet("Earth"),planet:earth});
+
 const { planet: mars, planetparent: marsparent } = CreatePlanet(
   4,
   marsTexture,
   78
 );
+labelRenderers.push({...LabelPlanet("Mars"),planet:mars});
+
 const { planet: jupiter, planetparent: jupiterparent } = CreatePlanet(
   12,
   jupiterTexture,
   100
 );
+labelRenderers.push({...LabelPlanet("Jupiter"),planet:jupiter});
+
 const { planet: saturn, planetparent: saturnparent } = CreatePlanet(
   10,
   saturnTexture,
   138,
-  { innerRadius: 10, outerRadius: 20, texture: saturnRingTexture }
+  { innerRadius: 10, outerRadius: 20, texture: saturnRingTexture,tiltangle:0.466 }
 );
+labelRenderers.push({...LabelPlanet("Saturn"),planet:saturn});
+
 const { planet: uranus, planetparent: uranusparent } = CreatePlanet(
   7,
   uranusTexture,
   176,
-  { innerRadius: 7, outerRadius: 12, texture: uranusRingTexture }
+  { innerRadius: 7, outerRadius: 12, texture: uranusRingTexture,tiltangle:0.466 }
 );
+labelRenderers.push({...LabelPlanet("Uranus"),planet:uranus});
+
 const { planet: neptune, planetparent: neptuneparent } = CreatePlanet(
   7,
   neptuneTexture,
   200
 );
+labelRenderers.push({...LabelPlanet("Neptune"),planet:neptune});
+
 const { planet: pluto, planetparent: plutoparent } = CreatePlanet(
   2.8,
   plutoTexture,
   216
 );
+labelRenderers.push({...LabelPlanet("Pluto"),planet:pluto});
+
+
 scene.add(mercuryparent);
 scene.add(venusparent);
 scene.add(earthparent);
@@ -248,6 +284,13 @@ function animate() {
   const unittime = (performance.now() - lasttime) / 1000;
 
   orbit.update();
+
+  renderer.render(scene,camera);
+
+  if(options.Labels)
+  {
+    for(let {labelRenderer} of labelRenderers) labelRenderer.render(scene,camera)
+  }
 
   sun.rotateY(!options.Revolution ? 0 : 0.004 * options.Speed);
 

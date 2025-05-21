@@ -23,7 +23,7 @@ export default function CreatePlanet(size, texture, distancefromsun, ring) {
     const planetRing = new THREE.Mesh(planetRingGeo, planetRingMat);
     planetparent.add(planetRing);
     planetRing.position.x = distancefromsun;
-    planetRing.rotation.x = -0.5 * Math.PI;
+    planetRing.rotation.x = -0.5 * Math.PI+ring.tiltangle;
   }
   return { planet, planetparent };
 }
