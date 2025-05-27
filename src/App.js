@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CSS2DRenderer, CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import LabelPlanet from "./Services/LabelPlanet";
+import LockAtPlanet from "./Services/LockAtPlanet";
 import * as dat from "dat.gui";
 import CreatePlanet from "./Services/CreatePlanet";
 import ModalWindow from "./Services/ModalWindow"
@@ -56,26 +57,28 @@ scene.background = cubeTextureLoader.load([
   starsTexture,
 ]);
 
-const gui = new dat.GUI();
-const views = ["---", "Front View", "Top View", "Sun view"];
-const options = {
-  Days: 0,
-  SunEffect: true,
-  Rotation: true,
-  Revolution: true,
-  Orbits: false,
-  Labels: false,
-  Speed: 1,
-  MotionSpeed: 10,
-  View: "Front View",
-};
-const daysController = gui.add(options, "Days").listen();
-setTimeout(() => {
-  const input = daysController.domElement.querySelector("input");
-  input.setAttribute("readonly", true);
-  input.style.pointerEvents = "none";
-}, 0);
-gui.add(options, "SunEffect").onChange((e) => {
+const handleViewChange=(e)=>{
+  if (e === "Front View") {
+    camera.position.set(-90, 140, 140);
+    camera.lookAt(sun)
+  } else if (e === "Top View") {
+    camera.position.set(
+      -0.0002439019382374073,
+      287.69888268129523,
+      0.000152586013841888
+    );
+    camera.lookAt(sun);
+  } else if (e === "Central View") {
+    camera.position.set(
+      -11.563101629441919,
+      4.851992372790176,
+      7.9054342080425934
+    );
+    camera.lookAt(mercury);
+  } else {
+  }
+}
+const handleSunGlareChange=(e)=>{
   if (e === true) {
     scene.remove(ambientLight);
     scene.add(pointLight);
@@ -83,7 +86,46 @@ gui.add(options, "SunEffect").onChange((e) => {
     scene.add(ambientLight);
     scene.remove(pointLight);
   }
-});
+}
+const handleWatchChange=(e)=>{
+  if(e==="---")
+  {
+    options.View="Front View"; 
+    handleViewChange("Front View");
+    options.SunGlare=true;
+    handleSunGlareChange(true);
+    gui.updateDisplay();
+  }
+  else
+  {
+    options.SunGlare=false;
+    handleSunGlareChange(false);
+    gui.updateDisplay();
+  }
+}
+
+const gui = new dat.GUI();
+const views = ["---", "Front View", "Top View", "Central View"];
+const watch = ["---","Mercury","Venus","Earth","Mars","Jupiter","Saturn","Jupiter","Saturn","Uranus","Neptune","Pluto"];
+const options = {
+  Days: 0,
+  SunGlare: true,
+  Rotation: true,
+  Revolution: true,
+  Orbits: false,
+  Labels: false,
+  Speed: 1,
+  MotionSpeed: 10,
+  View: "Front View",
+  Watch: "---",
+};
+const daysController = gui.add(options, "Days").listen();
+setTimeout(() => {
+  const input = daysController.domElement.querySelector("input");
+  input.setAttribute("readonly", true);
+  input.style.pointerEvents = "none";
+}, 0);
+gui.add(options, "SunGlare").onChange(handleSunGlareChange);
 gui.add(options, "Rotation");
 gui.add(options, "Revolution");
 const orbits = [
@@ -142,31 +184,19 @@ gui.add(options,"Labels").onChange((e)=>{
     for(let {LabelObject,planet} of labelRenderers) planet.remove(LabelObject);
   }
 })
-gui.add(options, "Speed", 0, 10);
-gui.add(options, "MotionSpeed", 0, 100);
-gui.add(options, "View", views).onChange((e) => {
-  if (e === "Front View") {
-    camera.position.set(-90, 140, 140);
-  } else if (e === "Top View") {
-    camera.position.set(
-      -0.0002439019382374073,
-      287.69888268129523,
-      0.000152586013841888
-    );
-  } else if (e === "Sun view") {
-    camera.position.set(
-      -11.563101629441919,
-      4.851992372790176,
-      7.9054342080425934
-    );
-  } else {
-  }
-});
+gui.add(options, "Speed", 0, 10).name("Planet Speed");
+gui.add(options, "MotionSpeed", 0, 100).name("Your Speed");
+gui.add(options, "View", views).onChange(handleViewChange);
+gui.add(options,"Watch",watch).name("Lock At").onChange(handleWatchChange);
+
 orbit.addEventListener("change", function (e) {
   if (options.View !== "---") {
     options.View = "---";
     gui.updateDisplay();
   }
+  // if(options.Watch!=="---"){
+  //  alert("Sorry you cannot control the position while watching any planet, Set the Watch to --- to re-enable your controls.")
+  // }
 });
 
 const pointLight = new THREE.PointLight(0xffffff, 10000);
@@ -277,9 +307,13 @@ window.addEventListener("keypress", (e) => {
   else if (e.key.toLowerCase() === "d")
     camera.position.add(right.clone().multiplyScalar(-options.MotionSpeed));
 });
-
+const handleOptionsWatchPlanetChange=(planet,offsetDistance=15)=>{
+  const {cameraPosition,planetWorldPosition}=LockAtPlanet(planet,sun,offsetDistance);
+  camera.position.copy(cameraPosition);
+  camera.lookAt(planetWorldPosition);
+}
 function animate() {
-  const overalltime = (performance.now() - starttime) / 1000; //Seconds.MilliSeconds
+  // const overalltime = (performance.now() - starttime) / 1000; //Seconds.MilliSeconds
   // const roundedoffoveralltime=Math.floor(overalltime);
   const unittime = (performance.now() - lasttime) / 1000;
 
@@ -290,6 +324,22 @@ function animate() {
   if(options.Labels)
   {
     for(let {labelRenderer} of labelRenderers) labelRenderer.render(scene,camera)
+  }
+
+  if(options.Watch!=="---")
+  {
+    switch(options.Watch)
+    {
+      case 'Mercury': handleOptionsWatchPlanetChange(mercury); break;
+      case 'Venus': handleOptionsWatchPlanetChange(venus); break;
+      case 'Earth': handleOptionsWatchPlanetChange(earth); break;
+      case 'Mars': handleOptionsWatchPlanetChange(mars); break;
+      case 'Jupiter': handleOptionsWatchPlanetChange(jupiter,20); break;
+      case 'Saturn': handleOptionsWatchPlanetChange(saturn); break;
+      case 'Uranus': handleOptionsWatchPlanetChange(uranus); break;
+      case 'Neptune': handleOptionsWatchPlanetChange(neptune); break;
+      case 'Pluto': handleOptionsWatchPlanetChange(pluto); break;
+    }
   }
 
   sun.rotateY(!options.Revolution ? 0 : 0.004 * options.Speed);
@@ -303,7 +353,7 @@ function animate() {
   uranus.rotateY(!options.Rotation ? 0 : 0.03);
   neptune.rotateY(!options.Rotation ? 0 : 0.032);
   pluto.rotateY(!options.Rotation ? 0 : 0.008);
-
+  
   mercuryparent.rotateY(!options.Revolution ? 0 : 0.04 * options.Speed);
   venusparent.rotateY(!options.Revolution ? 0 : 0.015 * options.Speed);
   earthparent.rotateY(!options.Revolution ? 0 : 0.01 * options.Speed);
