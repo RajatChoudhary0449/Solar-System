@@ -31,8 +31,8 @@ document.body.appendChild(renderer.domElement);
 const starttime = performance.now();
 let lasttime = performance.now();
 const scene = new THREE.Scene();
-const arrows=document.querySelector("#optional-buttons");
-const [leftarrow,rightarrow]=arrows.children;
+const arrows = document.querySelector("#optional-buttons");
+const [leftarrow, rightarrow] = arrows.children;
 const camera = new THREE.PerspectiveCamera(
   75, //field of view
   window.innerWidth / window.innerHeight, //aspect
@@ -45,7 +45,7 @@ const orbit = new OrbitControls(camera, renderer.domElement);
 //   console.log(`${camera.position.x},${camera.position.y},${camera.position.z}`);
 // });
 
-ModalWindow("<p>You can use <strong>WASD</strong> for your movement.</p>",10);
+ModalWindow("<p>You can use <strong>WASD</strong> for your movement.</p>", 10);
 
 camera.position.set(-90, 140, 140);
 
@@ -92,7 +92,6 @@ const handleSunGlareChange = (e) => {
   }
 };
 
-
 const gui = new dat.GUI();
 const views = ["---", "Front View", "Top View", "Central View"];
 const watch = [
@@ -114,7 +113,7 @@ const options = {
   Revolution: true,
   Orbits: false,
   Labels: false,
-  Speed: 1,
+  Speed: 10,
   MotionSpeed: 10,
   View: "Front View",
   Watch: "None",
@@ -126,8 +125,8 @@ setTimeout(() => {
   input.style.pointerEvents = "none";
 }, 0);
 gui.add(options, "SunGlare").onChange(handleSunGlareChange);
-const RotationController=gui.add(options, "Rotation");
-const RevolutionController=gui.add(options, "Revolution");
+const RotationController = gui.add(options, "Rotation");
+const RevolutionController = gui.add(options, "Revolution");
 const orbits = [
   new THREE.Mesh(
     new THREE.RingGeometry(27, 29, 60),
@@ -167,14 +166,14 @@ const orbits = [
   ),
 ];
 for (let it of orbits) it.rotation.x = -0.5 * Math.PI;
-const OrbitsController=gui.add(options, "Orbits").onChange((e) => {
+const OrbitsController = gui.add(options, "Orbits").onChange((e) => {
   if (e === true) {
     for (let it of orbits) scene.add(it);
   } else {
     for (let it of orbits) scene.remove(it);
   }
 });
-const LabelController=gui.add(options, "Labels").onChange((e) => {
+const LabelController = gui.add(options, "Labels").onChange((e) => {
   if (e === true) {
     for (let { LabelObject, planet } of labelRenderers) planet.add(LabelObject);
   } else {
@@ -182,8 +181,10 @@ const LabelController=gui.add(options, "Labels").onChange((e) => {
       planet.remove(LabelObject);
   }
 });
-gui.add(options, "Speed", 0, 10).name("Planet Speed");
-const YourSpeedController=gui.add(options, "MotionSpeed", 0, 100).name("Your Speed");
+gui.add(options, "Speed", 0, 100).name("Planet Speed");
+const YourSpeedController = gui
+  .add(options, "MotionSpeed", 0, 100)
+  .name("Your Speed");
 
 orbit.addEventListener("change", function (e) {
   if (options.View !== "---") {
@@ -194,55 +195,70 @@ orbit.addEventListener("change", function (e) {
   //  alert("Sorry you cannot control the position while watching any planet, Set the Watch to --- to re-enable your controls.")
   // }
 });
-let welcomeForThePlanetLock=true;
-const leftarrowTask=()=>{
-  const curidx=watch.findIndex(ele=>ele===options.Watch);
-  if(curidx===0) {
-    ModalWindow("Sorry you are already at the starting index",10);
+let welcomeForThePlanetLock = true;
+const rightarrowTask = () => {
+  const curidx = watch.findIndex((ele) => ele === options.Watch);
+  if (curidx === watch.length - 1) {
+    ModalWindow("Sorry you are already at the last index", 10);
     return;
   }
-  options.Watch=watch[curidx-1];
-  gui.updateDisplay(); 
-}
-const rightarrowTask=()=>{
-  const curidx=watch.findIndex(ele=>ele===options.Watch);
-  if(curidx===watch.length-1) {
-    ModalWindow("Sorry you are already at the last index",10);
-    return;
-  }
-  options.Watch=watch[curidx+1];
-  gui.updateDisplay(); 
-}
-const handleWatchChange = (e) => {
-  if (e === "None") {
-    options.View = "Front View";
-    handleViewChange("Front View");
+  options.Watch = watch[curidx + 1];
+  gui.updateDisplay();
+};
+const leftarrowTask = () => {
+  const curidx = watch.findIndex((ele) => ele === options.Watch);
+  if (curidx === 1) {
     options.SunGlare = true;
     handleSunGlareChange(true);
     gui.updateDisplay();
-    ViewController.domElement.querySelector('select').disabled=false;
-    welcomeForThePlanetLock=true;
+    ViewController.domElement.querySelector("select").disabled = false;
+    welcomeForThePlanetLock = true;
     arrows.classList.add("hidden");
-    leftarrow.removeEventListener("click",leftarrowTask);
-    rightarrowTask.removeEventListener("click",rightarrowTask);
+    leftarrow.removeEventListener("click", leftarrowTask);
+    rightarrow.removeEventListener("click", rightarrowTask);
+    options.Watch = "None";
+    console.log(options.Watch);
+    gui.updateDisplay();
+    return;
+  } else if (curidx === 0) {
+    ModalWindow("Sorry you are already at the starting index", 10);
+    return;
+  }
+  options.Watch = watch[curidx - 1];
+  gui.updateDisplay();
+};
+
+const handleWatchChange = (e) => {
+  if (e === "None") {
+    options.SunGlare = true;
+    handleSunGlareChange(true);
+    gui.updateDisplay();
+    ViewController.domElement.querySelector("select").disabled = false;
+    welcomeForThePlanetLock = true;
+    arrows.classList.add("hidden");
+    leftarrow.removeEventListener("click", leftarrowTask);
+    rightarrow.removeEventListener("click", rightarrowTask);
   } else {
     options.SunGlare = false;
     handleSunGlareChange(false);
     gui.updateDisplay();
     ViewController.domElement.querySelector("select").disabled = true;
-    if(welcomeForThePlanetLock)
-    {
-      ModalWindow("Welcome to the planet lock, Choose lockAt=\"None\" to disable the lock",15)
-      welcomeForThePlanetLock=false;
+    if (welcomeForThePlanetLock) {
+      ModalWindow(
+        'Welcome to the planet lock, Choose lockAt="None" to disable the lock',
+        15
+      );
+      welcomeForThePlanetLock = false;
       arrows.classList.remove("hidden");
-      leftarrow.addEventListener("click",leftarrowTask);
-      rightarrow.addEventListener("click",rightarrowTask);
+      leftarrow.addEventListener("click", leftarrowTask);
+      rightarrow.addEventListener("click", rightarrowTask);
     }
   }
 };
-const ViewController=gui.add(options, "View", views).onChange(handleViewChange);
+const ViewController = gui
+  .add(options, "View", views)
+  .onChange(handleViewChange);
 gui.add(options, "Watch", watch).name("Lock At").onChange(handleWatchChange);
-
 
 const pointLight = new THREE.PointLight(0xffffff, 10000);
 scene.add(pointLight);
@@ -373,7 +389,6 @@ function animate() {
   // const overalltime = (performance.now() - starttime) / 1000; //Seconds.MilliSeconds
   // const roundedoffoveralltime=Math.floor(overalltime);
   const unittime = (performance.now() - lasttime) / 1000;
-
   orbit.update();
 
   renderer.render(scene, camera);
@@ -415,7 +430,7 @@ function animate() {
     }
   }
 
-  sun.rotateY(!options.Revolution ? 0 : 0.004 * options.Speed);
+  sun.rotateY(!options.Revolution ? 0 : 0.004 * options.Speed*0.1);
 
   mercury.rotateY(!options.Rotation ? 0 : 0.004);
   venus.rotateY(!options.Rotation ? 0 : 0.002);
@@ -427,18 +442,18 @@ function animate() {
   neptune.rotateY(!options.Rotation ? 0 : 0.032);
   pluto.rotateY(!options.Rotation ? 0 : 0.008);
 
-  mercuryparent.rotateY(!options.Revolution ? 0 : 0.04 * options.Speed);
-  venusparent.rotateY(!options.Revolution ? 0 : 0.015 * options.Speed);
-  earthparent.rotateY(!options.Revolution ? 0 : 0.01 * options.Speed);
-  marsparent.rotateY(!options.Revolution ? 0 : 0.008 * options.Speed);
-  jupiterparent.rotateY(!options.Revolution ? 0 : 0.002 * options.Speed);
-  saturnparent.rotateY(!options.Revolution ? 0 : 0.0009 * options.Speed);
-  uranusparent.rotateY(!options.Revolution ? 0 : 0.0004 * options.Speed);
-  neptuneparent.rotateY(!options.Revolution ? 0 : 0.0001 * options.Speed);
-  plutoparent.rotateY(!options.Revolution ? 0 : 0.00007 * options.Speed);
+  mercuryparent.rotateY(!options.Revolution ? 0 : 0.04 * options.Speed*0.1);
+  venusparent.rotateY(!options.Revolution ? 0 : 0.015 * options.Speed*0.1);
+  earthparent.rotateY(!options.Revolution ? 0 : 0.01 * options.Speed*0.1);
+  marsparent.rotateY(!options.Revolution ? 0 : 0.008 * options.Speed*0.1);
+  jupiterparent.rotateY(!options.Revolution ? 0 : 0.002 * options.Speed*0.1);
+  saturnparent.rotateY(!options.Revolution ? 0 : 0.0009 * options.Speed*0.1);
+  uranusparent.rotateY(!options.Revolution ? 0 : 0.0004 * options.Speed*0.1);
+  neptuneparent.rotateY(!options.Revolution ? 0 : 0.0001 * options.Speed*0.1);
+  plutoparent.rotateY(!options.Revolution ? 0 : 0.00007 * options.Speed*0.1);
   renderer.render(scene, camera);
   if (options.Revolution)
-    options.Days = options.Days + unittime * 36 * options.Speed;
+    options.Days = options.Days + unittime * 36 * options.Speed*0.1;
   lasttime = performance.now();
 }
 
