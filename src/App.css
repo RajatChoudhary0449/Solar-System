@@ -4,3 +4,26 @@ body{
   box-sizing: border-box;
   overflow: hidden;
 }
+#optional-buttons{
+  background-color: rgba(0,0,0,0);
+  color:white;
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  font-size:65px;
+  transform: translateY(-50%);
+}
+#optional-buttons.hidden{
+  display: none;
+}
+#optional-buttons .button{
+  font-size: 65px;
+  background-color: black;
+  color: white;
+  cursor: pointer;
+  border:none;
+}

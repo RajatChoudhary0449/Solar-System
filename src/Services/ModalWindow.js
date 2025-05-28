@@ -1,11 +1,13 @@
 import "./ModalWindow.css";
-export default function ModalWindow() {
+export default function ModalWindow(textprop,timerprop=10) {
   setTimeout(() => {
     const modal = document.getElementById("instruction-modal");
     const closeButton = document.getElementById("close-modal");
     const timer = document.querySelector(".timer");
+    const text=document.querySelector("#instruction-modal p");
     modal.style.display = "flex";
-
+    text.innerHTML=textprop;
+    timer.innerHTML=timerprop;
     closeButton.addEventListener("click", () => {
       modal.style.display = "none";
     });
@@ -22,6 +24,6 @@ export default function ModalWindow() {
       modal.style.display = "none";
       document.body.removeEventListener("click", bodyClickHandler);
       clearInterval(id);
-    }, 10000);
+    }, timerprop*1000);
   }, 0);
 }

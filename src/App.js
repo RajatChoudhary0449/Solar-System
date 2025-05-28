@@ -31,7 +31,8 @@ document.body.appendChild(renderer.domElement);
 const starttime = performance.now();
 let lasttime = performance.now();
 const scene = new THREE.Scene();
-
+const arrows=document.querySelector("#optional-buttons");
+const [leftarrow,rightarrow]=arrows.children;
 const camera = new THREE.PerspectiveCamera(
   75, //field of view
   window.innerWidth / window.innerHeight, //aspect
@@ -44,7 +45,7 @@ const orbit = new OrbitControls(camera, renderer.domElement);
 //   console.log(`${camera.position.x},${camera.position.y},${camera.position.z}`);
 // });
 
-ModalWindow();
+ModalWindow("<p>You can use <strong>WASD</strong> for your movement.</p>",10);
 
 camera.position.set(-90, 140, 140);
 
@@ -95,13 +96,11 @@ const handleSunGlareChange = (e) => {
 const gui = new dat.GUI();
 const views = ["---", "Front View", "Top View", "Central View"];
 const watch = [
-  "---",
+  "None",
   "Mercury",
   "Venus",
   "Earth",
   "Mars",
-  "Jupiter",
-  "Saturn",
   "Jupiter",
   "Saturn",
   "Uranus",
@@ -118,7 +117,7 @@ const options = {
   Speed: 1,
   MotionSpeed: 10,
   View: "Front View",
-  Watch: "---",
+  Watch: "None",
 };
 const daysController = gui.add(options, "Days").listen();
 setTimeout(() => {
@@ -195,20 +194,50 @@ orbit.addEventListener("change", function (e) {
   //  alert("Sorry you cannot control the position while watching any planet, Set the Watch to --- to re-enable your controls.")
   // }
 });
-
+let welcomeForThePlanetLock=true;
+const leftarrowTask=()=>{
+  const curidx=watch.findIndex(ele=>ele===options.Watch);
+  if(curidx===0) {
+    ModalWindow("Sorry you are already at the starting index",10);
+    return;
+  }
+  options.Watch=watch[curidx-1];
+  gui.updateDisplay(); 
+}
+const rightarrowTask=()=>{
+  const curidx=watch.findIndex(ele=>ele===options.Watch);
+  if(curidx===watch.length-1) {
+    ModalWindow("Sorry you are already at the last index",10);
+    return;
+  }
+  options.Watch=watch[curidx+1];
+  gui.updateDisplay(); 
+}
 const handleWatchChange = (e) => {
-  if (e === "---") {
+  if (e === "None") {
     options.View = "Front View";
     handleViewChange("Front View");
     options.SunGlare = true;
     handleSunGlareChange(true);
     gui.updateDisplay();
     ViewController.domElement.querySelector('select').disabled=false;
+    welcomeForThePlanetLock=true;
+    arrows.classList.add("hidden");
+    leftarrow.removeEventListener("click",leftarrowTask);
+    rightarrowTask.removeEventListener("click",rightarrowTask);
   } else {
     options.SunGlare = false;
     handleSunGlareChange(false);
     gui.updateDisplay();
-    ViewController.domElement.querySelector('select').disabled=true;
+    ViewController.domElement.querySelector("select").disabled = true;
+    if(welcomeForThePlanetLock)
+    {
+      ModalWindow("Welcome to the planet lock, Choose lockAt=\"None\" to disable the lock",15)
+      welcomeForThePlanetLock=false;
+      arrows.classList.remove("hidden");
+      leftarrow.addEventListener("click",leftarrowTask);
+      rightarrow.addEventListener("click",rightarrowTask);
+    }
   }
 };
 const ViewController=gui.add(options, "View", views).onChange(handleViewChange);
@@ -354,7 +383,7 @@ function animate() {
       labelRenderer.render(scene, camera);
   }
 
-  if (options.Watch !== "---") {
+  if (options.Watch !== "None") {
     switch (options.Watch) {
       case "Mercury":
         handleOptionsWatchPlanetChange(mercury);
