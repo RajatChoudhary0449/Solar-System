@@ -14,15 +14,18 @@ import starsTexture from "./Images/stars.jpg";
 import sunTexture from "./Images/sun.jpg";
 import mercuryTexture from "./Images/mercury.jpg";
 import venusTexture from "./Images/venus.jpg";
-import earthTexture from "./Images/earth.jpg";
-import marsTexture from "./Images/mars.jpg";
+import earthTexture from "./Images/earth2.jpg";
+import marsTexture from "./Images/mars2.jpg";
 import jupiterTexture from "./Images/jupiter.jpg";
-import saturnTexture from "./Images/saturn.jpg";
+import saturnTexture from "./Images/saturn.jpeg";
 import saturnRingTexture from "./Images/saturn ring.png";
-import uranusTexture from "./Images/uranus.jpg";
+import uranusTexture from "./Images/uranus.webp";
 import uranusRingTexture from "./Images/uranus ring.png";
 import neptuneTexture from "./Images/neptune.jpg";
 import plutoTexture from "./Images/pluto.jpg";
+import earthmoon from './Images/moon.jpg';
+import phobosTexture from './Images/phobos.jpeg';
+import deimosTexture from './Images/Deimos.webp';
 
 const renderer = new THREE.WebGLRenderer();
 renderer.shadowMap.enabled = true;
@@ -278,35 +281,43 @@ labelRenderers.push({ ...LabelPlanet("Sun", 0), planet: sun });
 const { planet: mercury, planetparent: mercuryparent } = CreatePlanet(
   3.2,
   mercuryTexture,
-  28
+  28,
+  []
 );
 labelRenderers.push({ ...LabelPlanet("Mercury"), planet: mercury });
 
 const { planet: venus, planetparent: venusparent } = CreatePlanet(
   5.8,
   venusTexture,
-  44
+  44,
+  []
 );
 labelRenderers.push({ ...LabelPlanet("Venus"), planet: venus });
 
-const { planet: earth, planetparent: earthparent } = CreatePlanet(
+const { planet: earth, planetparent: earthparent,moonparents:earthMoon } = CreatePlanet(
   6,
   earthTexture,
-  62
+  62,
+  [{radius:0.87,texture:earthmoon,position:7}]
 );
 labelRenderers.push({ ...LabelPlanet("Earth"), planet: earth });
 
-const { planet: mars, planetparent: marsparent } = CreatePlanet(
+const { planet: mars, planetparent: marsparent, moonparents:marsMoons } = CreatePlanet(
   4,
   marsTexture,
-  78
+  78,
+  [
+    {radius:0.87,texture:phobosTexture,position:5.5,tiltangle:0.012},
+    {radius:0.87,texture:deimosTexture,position:7.5,tiltangle:0.024}
+  ]
 );
 labelRenderers.push({ ...LabelPlanet("Mars"), planet: mars });
 
 const { planet: jupiter, planetparent: jupiterparent } = CreatePlanet(
   12,
   jupiterTexture,
-  100
+  100,
+  []
 );
 labelRenderers.push({ ...LabelPlanet("Jupiter"), planet: jupiter });
 
@@ -314,6 +325,7 @@ const { planet: saturn, planetparent: saturnparent } = CreatePlanet(
   10,
   saturnTexture,
   138,
+  [],
   {
     innerRadius: 10,
     outerRadius: 20,
@@ -327,6 +339,7 @@ const { planet: uranus, planetparent: uranusparent } = CreatePlanet(
   7,
   uranusTexture,
   176,
+  [],
   {
     innerRadius: 7,
     outerRadius: 12,
@@ -339,14 +352,16 @@ labelRenderers.push({ ...LabelPlanet("Uranus"), planet: uranus });
 const { planet: neptune, planetparent: neptuneparent } = CreatePlanet(
   7,
   neptuneTexture,
-  200
+  200,
+  []
 );
 labelRenderers.push({ ...LabelPlanet("Neptune"), planet: neptune });
 
 const { planet: pluto, planetparent: plutoparent } = CreatePlanet(
   2.8,
   plutoTexture,
-  216
+  216,
+  []
 );
 labelRenderers.push({ ...LabelPlanet("Pluto"), planet: pluto });
 
@@ -441,6 +456,13 @@ function animate() {
   uranus.rotateY(!options.Rotation ? 0 : 0.03);
   neptune.rotateY(!options.Rotation ? 0 : 0.032);
   pluto.rotateY(!options.Rotation ? 0 : 0.008);
+
+  earthMoon.forEach(element => {
+    element.rotateY(!options.Rotation?0:0.01);
+  });
+  marsMoons.forEach(element=>{
+    element.rotateY(!options.Rotation?0:0.01);
+  })
 
   mercuryparent.rotateY(!options.Revolution ? 0 : 0.04 * options.Speed*0.1);
   venusparent.rotateY(!options.Revolution ? 0 : 0.015 * options.Speed*0.1);
